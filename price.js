@@ -1,16 +1,16 @@
 var httpclient = require('https');
-var MsgHub = require('pubsub-client.js')
+var MsgHub = require('/root/pubsub/pubsub-client.js')
 
 var current = new Date().getTime();
 msghub = new MsgHub('https://pubsub.msghub.io');
 //msghub = new MsgHub('http://198.199.97.15:12345');
-msghub.erase('bitcoin', {"timeframe": {"max": current - 10800 * 1000}});
+msghub.erase('bitcoin', {"timeframe": {"max": current - 21600 * 1000}});
 
 
 setInterval( function() {
     var options = {
-        host: 'data.mtgox.com',
-        path: '/api/2/BTCUSD/money/ticker_fast',
+        host: 'api.bitcoinaverage.com',
+        path: '/ticker/global/USD/',
 //        rejectUnauthorized: false,
         port: 443
     };
@@ -27,15 +27,15 @@ setInterval( function() {
                 return;
             }
 
-            var _current = parseInt(result.data.now) / 1000;
-            var _price = result.data.last.value;
+            var _current = (new Date(result.timestamp)).getTime();
+            var _price = result.last;
 
             if (_current > current) {
                 current = _current;
                 console.log(new Date(_current).toString() + ": " + _price);
                 msghub.publish("bitcoin", result, true);
                 msghub.save("bitcoin", result);
-                msghub.erase('bitcoin', {"timeframe": {"max": current - 10800 * 1000}});
+                msghub.erase('bitcoin', {"timeframe": {"max": current - 21600 * 1000}});
             }
         });
     }).on('error', function(e) {
@@ -43,7 +43,7 @@ setInterval( function() {
     });
 
     global.gc();
-}, 10000);
+}, 30000);
 
 process.on('uncaughtException', function globalErrorCatch(error, p){
     console.error(error);
